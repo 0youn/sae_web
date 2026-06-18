@@ -1,0 +1,64 @@
+{% extends 'capteurs/base.html' %} {% block contenu %}
+<p><a href="{% url 'liste' %}">← Retour</a></p>
+<h1>Capteur {{ capteur.nom }}</h1>
+<p>ID : <code>{{ capteur.id }}</code> · Pièce (MQTT) : {{ capteur.piece }}</p>
+<p class="moy">
+    Moyenne : {% if moyenne %}{{ moyenne|floatformat:2 }} °C{% else %}—{% endif
+    %}
+</p>
+
+<h2>Modifier (nom et emplacement uniquement)</h2>
+<form method="post" class="filtres">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="modifier" />
+    Nom <input type="text" name="nom" value="{{ capteur.nom }}" /> Emplacement
+    <input type="text" name="emplacement" value="{{ capteur.emplacement }}" />
+    <button class="btn" type="submit">Enregistrer</button>
+</form>
+
+<form
+    method="post"
+    onsubmit="return confirm('Supprimer ce capteur et toutes ses mesures ?');"
+>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="supprimer" />
+    <button class="btn btn-danger" type="submit">Supprimer le capteur</button>
+</form>
+
+<h2>Graphique des températures</h2>
+<canvas id="g" height="100"></canvas>
+{{ labels|json_script:"labels" }} {{ valeurs|json_script:"valeurs" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    new Chart(document.getElementById("g"), {
+        type: "line",
+        data: {
+            labels: JSON.parse(document.getElementById("labels").textContent),
+            datasets: [
+                {
+                    label: "Température °C",
+                    data: JSON.parse(
+                        document.getElementById("valeurs").textContent,
+                    ),
+                    borderColor: "#1456b8",
+                    tension: 0.2,
+                },
+            ],
+        },
+    });
+</script>
+
+<h2>Mesures (max 200)</h2>
+<table>
+    <tr>
+        <th>Date/heure</th>
+        <th>Température °C</th>
+    </tr>
+    {% for m in mesures %}
+    <tr>
+        <td>{{ m.date_heure|date:"d/m/Y H:i:s" }}</td>
+        <td>{{ m.temperature }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {% if refresh %}
+        <meta http-equiv="refresh" content="{{ refresh }}" />
+        {% endif %}
+        <title>SAE — Capteurs</title>
+        <style>
+            body {
+                font-family: system-ui, sans-serif;
+                margin: 2rem;
+                color: #222;
+                background: #fafafa;
+            }
+            h1 {
+                margin-top: 0;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                background: #fff;
+                margin-bottom: 1.5rem;
+            }
+            th,
+            td {
+                border: 1px solid #ddd;
+                padding: 0.4rem 0.6rem;
+                text-align: left;
+                font-size: 0.9rem;
+            }
+            th {
+                background: #f0f0f0;
+            }
+            a {
+                color: #1456b8;
+                text-decoration: none;
+            }
+            .filtres {
+                background: #fff;
+                padding: 1rem;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+            }
+            .filtres input {
+                padding: 0.3rem;
+                margin: 0 0.4rem;
+            }
+            .btn {
+                padding: 0.4rem 0.8rem;
+                background: #1456b8;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+            .btn-danger {
+                background: #c0392b;
+            }
+            .msg {
+                padding: 0.6rem;
+                border-radius: 6px;
+                margin: 0.4rem 0;
+            }
+            .msg.success {
+                background: #e6f4ea;
+            }
+            .msg.error {
+                background: #fdecea;
+            }
+            .moy {
+                font-size: 1.15rem;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        {% if messages %}{% for m in messages %}
+        <div class="msg {{ m.tags }}">{{ m }}</div>
+        {% endfor %}{% endif %} {% block contenu %}{% endblock %}
+    </body>
+</html>
