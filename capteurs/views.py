@@ -5,12 +5,12 @@ from django.db import IntegrityError
 from django.db.models import Avg, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from .models import Capteur, Mesure
 
 
 def _filtrer(request):
-    """Applique les filtres GET communs (q, debut, fin) et renvoie le queryset."""
     qs = Mesure.objects.select_related("capteur").all()
     q = request.GET.get("q", "").strip()
     debut = request.GET.get("debut", "").strip()
@@ -22,6 +22,12 @@ def _filtrer(request):
     if fin:
         qs = qs.filter(date_heure__date__lte=fin)
     return qs.order_by("-date_heure"), q, debut, fin
+
+
+def liste_capteurs(request):
+    """Page d'accueil : liste des capteurs avec actions Détail / Graphique / Supprimer."""
+    capteurs = Capteur.objects.order_by("nom")
+    return render(request, "capteurs/liste_capteurs.html", {"capteurs": capteurs})
 
 
 def liste_mesures(request):
@@ -50,44 +56,46 @@ def liste_mesures(request):
 
 def capteur_detail(request, capteur_id):
     capteur = get_object_or_404(Capteur, pk=capteur_id)
-    if request.method == "POST":
-        action = request.POST.get("action")
-        if action == "supprimer":
-            capteur.delete()
-            messages.success(request, "Capteur et mesures supprimés.")
-            return redirect("liste")
-        if action == "modifier":
-            capteur.nom = request.POST.get("nom", capteur.nom).strip()
-            capteur.emplacement = request.POST.get(
-                "emplacement", capteur.emplacement
-            ).strip()
-            try:
-                capteur.save()
-                messages.success(request, "Capteur mis à jour.")
-            except IntegrityError:
-                messages.error(
-                    request, "Ce nom est déjà utilisé (il doit être unique)."
-                )
-            return redirect("capteur_detail", capteur_id=capteur.id)
 
-    mesures = capteur.mesures.order_by("-date_heure")[:200]
-    moyenne = capteur.mesures.aggregate(m=Avg("temperature"))["m"]
+    if request.method == "POST":
+        capteur.nom = request.POST.get("nom", capteur.nom).strip()
+        capteur.emplacement = request.POST.get("emplacement", capteur.emplacement).strip()
+        try:
+            capteur.save()
+            messages.success(request, "Capteur mis à jour.")
+        except IntegrityError:
+            messages.error(request, "Ce nom est déjà utilisé (il doit être unique).")
+        return redirect("capteur_detail", capteur_id=capteur.id)
+
+    mesures = capteur.mesures.order_by("-date_heure")[:50]
+    return render(request, "capteurs/detail.html", {"capteur": capteur, "mesures": mesures})
+
+
+def capteur_graphique(request, capteur_id):
+    """Page d'un capteur affichant uniquement la courbe de ses températures."""
+    capteur = get_object_or_404(Capteur, pk=capteur_id)
     points = list(
-        capteur.mesures.order_by("date_heure").values_list("date_heure", "temperature")[
-            :200
-        ]
+        capteur.mesures.order_by("-date_heure").values_list("date_heure", "temperature")[:200]
     )
+    points.reverse()
     return render(
         request,
-        "capteurs/detail.html",
+        "capteurs/graphique.html",
         {
             "capteur": capteur,
-            "mesures": mesures,
-            "moyenne": moyenne,
-            "labels": [d.strftime("%d/%m %H:%M") for d, _ in points],
+            "labels": [d.strftime("%Y-%m-%d %H:%M:%S") for d, _ in points],
             "valeurs": [float(t) for _, t in points],
         },
     )
+
+
+@require_POST
+def capteur_supprimer(request, capteur_id):
+    capteur = get_object_or_404(Capteur, pk=capteur_id)
+    nom = capteur.nom
+    capteur.delete()
+    messages.success(request, f"Capteur « {nom} » supprimé.")
+    return redirect("liste")
 
 
 def export_csv(request):
@@ -97,13 +105,8 @@ def export_csv(request):
     w = csv.writer(response)
     w.writerow(["id_capteur", "nom", "piece", "date_heure", "temperature"])
     for m in qs[:5000]:
-        w.writerow(
-            [
-                m.capteur.id,
-                m.capteur.nom,
-                m.capteur.piece,
-                m.date_heure.strftime("%Y-%m-%d %H:%M:%S"),
-                m.temperature,
-            ]
-        )
+        w.writerow([
+            m.capteur.id, m.capteur.nom, m.capteur.piece,
+            m.date_heure.strftime("%Y-%m-%d %H:%M:%S"), m.temperature,
+        ])
     return response

@@ -1,34 +1,23 @@
-{% extends 'capteurs/base.html' %} {% block contenu %}
-<h1>Données des capteurs</h1>
+{% extends 'capteurs/base.html' %}
+{% block contenu %}
+<p><a class="btn" href="{% url 'liste' %}">← Accueil</a></p>
+
+<h1>Données</h1>
 
 <form class="filtres" method="get">
-    <input
-        type="text"
-        name="q"
-        value="{{ q }}"
-        placeholder="Nom ou ID du capteur"
-    />
-    du <input type="date" name="debut" value="{{ debut }}" /> au
-    <input type="date" name="fin" value="{{ fin }}" /> rafraîchir(s)
-    <input
-        type="number"
-        name="refresh"
-        value="{{ refresh }}"
-        min="0"
-        style="width: 4rem"
-    />
+    <input type="text" name="q" value="{{ q }}" placeholder="Nom ou ID du capteur">
+    du <input type="date" name="debut" value="{{ debut }}">
+    au <input type="date" name="fin" value="{{ fin }}">
+    rafraîchir(s) <input type="number" name="refresh" value="{{ refresh }}" min="0" style="width:4rem">
     <button class="btn" type="submit">Filtrer</button>
-    <a class="btn" href="{% url 'liste' %}">Réinitialiser</a>
-    <a
-        class="btn"
-        href="{% url 'export_csv' %}?q={{ q }}&debut={{ debut }}&fin={{ fin }}"
-        >Export CSV</a
-    >
+    <a class="btn" href="{% url 'donnees' %}">Réinitialiser</a>
+    <a class="btn" href="{% url 'export_csv' %}?q={{ q }}&debut={{ debut }}&fin={{ fin }}">Export CSV</a>
 </form>
 
 <p class="moy">
-    Température moyenne (filtre courant) : {% if moyenne %}{{
-    moyenne|floatformat:2 }} °C{% else %}—{% endif %} · {{ total }} mesures
+    Température moyenne (filtre courant) :
+    {% if moyenne is not None %}{{ moyenne|floatformat:2 }} °C{% else %}—{% endif %}
+    · {{ total }} mesures
 </p>
 
 <h2>Moyenne par capteur</h2>
@@ -40,11 +29,7 @@
     </tr>
     {% for c in moyennes_capteur %}
     <tr>
-        <td>
-            <a href="{% url 'capteur_detail' c.capteur__id %}"
-                >{{ c.capteur__nom }}</a
-            >
-        </td>
+        <td><a href="{% url 'capteur_detail' c.capteur__id %}">{{ c.capteur__nom }}</a></td>
         <td>{{ c.capteur__id }}</td>
         <td>{{ c.moy|floatformat:2 }}</td>
     </tr>
@@ -56,24 +41,18 @@
     <tr>
         <th>Date/heure</th>
         <th>Capteur</th>
-        <th>Pièce</th>
+        <th>Emplacement</th>
         <th>Température °C</th>
     </tr>
     {% for m in mesures %}
     <tr>
         <td>{{ m.date_heure|date:"d/m/Y H:i:s" }}</td>
-        <td>
-            <a href="{% url 'capteur_detail' m.capteur.id %}"
-                >{{ m.capteur.nom }}</a
-            >
-        </td>
-        <td>{{ m.capteur.piece }}</td>
+        <td><a href="{% url 'capteur_detail' m.capteur.id %}">{{ m.capteur.nom }}</a></td>
+        <td>{{ m.capteur.emplacement }}</td>
         <td>{{ m.temperature }}</td>
     </tr>
     {% empty %}
-    <tr>
-        <td colspan="4">Aucune donnée.</td>
-    </tr>
+    <tr><td colspan="4">Aucune donnée.</td></tr>
     {% endfor %}
 </table>
 {% endblock %}

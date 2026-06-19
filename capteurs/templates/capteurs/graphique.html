@@ -1,0 +1,38 @@
+{% extends 'capteurs/base.html' %}
+{% block contenu %}
+<p><a class="btn" href="{% url 'liste' %}">← Accueil</a></p>
+
+<h1>Graphique — {{ capteur.nom }}</h1>
+
+<canvas id="graphique" height="100"></canvas>
+
+{{ labels|json_script:"labels" }}
+{{ valeurs|json_script:"valeurs" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    new Chart(document.getElementById('graphique'), {
+        type: 'line',
+        data: {
+            labels: JSON.parse(document.getElementById('labels').textContent),
+            datasets: [{
+                label: 'Température (°C)',
+                data: JSON.parse(document.getElementById('valeurs').textContent),
+                borderColor: '#1456b8',
+                backgroundColor: 'rgba(20, 86, 184, 0.15)',
+                borderWidth: 2,
+                pointBackgroundColor: '#1456b8',
+                pointRadius: 2.5,
+                fill: true,
+                tension: 0.25
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { ticks: { maxRotation: 90, minRotation: 60, font: { size: 10 } } },
+                y: { beginAtZero: true, suggestedMax: 30 }
+            }
+        }
+    });
+</script>
+{% endblock %}

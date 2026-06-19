@@ -122,6 +122,7 @@ USE_TZ = False
 STATIC_URL = "static/"
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://10.252.5.130:8000",
-    "http://10.252.5.130:8080",
+    'http://10.252.5.130:8000',
+    'http://10.252.5.130:8080',
+    'http://10.252.5.130',
 ]
